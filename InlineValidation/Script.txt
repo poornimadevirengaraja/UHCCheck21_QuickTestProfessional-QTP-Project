@@ -1,0 +1,114 @@
+﻿ '########################################################################################################
+' Script Name 		 							  	 Firefly_InlineValidation_ModuleV1.0
+' Script Creation Date 						   16 March 2012
+' Script Created By 							Poornima Devi R
+' Script  Last Updated Date          
+'########################################################################################################
+
+'Get Start Time of the execution of script
+StTime=Time
+systemutil.CloseProcessByName "caffeine.exe"
+systemutil.CloseProcessByName "Excel.exe"
+
+' Run Caffine
+caffine=environment.Value("Caffinepath")&"caffeine.exe"
+SystemUtil.Run caffine
+
+'Execute a Function Library required for this script
+Functionspath=environment.Value("FuncPath")
+ExecuteFile Functionspath
+
+' Get values from Ini path xml file( Environmental variables)
+Reportpath=Environment.Value("Reportpath")
+Testdatapath=Environment.Value("Testdatapath")
+Templatepath=Environment.Value("Templatepath")
+Rpath=environment.Value("SharedRepPath")
+
+
+' Getting URL path, UserName , Password, DB Name
+URLpath=Environment.Value("URLpath")
+Username=Environment.Value("Username")
+Password=Environment.Value("Password")
+Databasename=Environment.Value("Databasename")
+toaddress=Environment.Value("Mail_To_address")
+
+'Getting execution start date and time
+timearray=Split(StTime,":")
+datearray=Split(Date,"/")
+dateformat=datearray(0)&"-"&datearray(1)&"-"&datearray(2)
+Timeformat=timearray(0)&"-"&timearray(1)&"-"&timearray(2)
+Pathname=Reportpath&"Report_FireFlyFlowTest_InlineValidation_MultipleField"&"_"&dateformat&"_"&Timeformat&".xls"
+Htmlpath=Reportpath&"Report_FireFlyFlowTest_InlineValidation_MultipleField"&"_"&dateformat&"_"&Timeformat&".html"
+
+
+
+'Loading URM shared Repository to the Mainscript 
+Dim qtp, qtpRep
+Set qtp = CreateObject("QuickTest.Application") 
+Set qtpRep=qtp.Test.Actions("Action1").ObjectRepositories 'Get the current action's Object repostories collection that is Action1's Object repositories collection
+If qtpRep.Find(Rpath) = -1 Then 'Verifying whether the shared repository is already present in collection list. For a New test this is not required. This would be more helpful for an existing test
+qtpRep.Add(Rpath),1
+End If
+Set qtp = Nothing
+'
+''#################################Execute Main script#########################################
+
+Call DBRemoveGreencolor()
+Call CheckTestdatasheetHeaders(Testdatapath)
+Call ReportTemplateCreation(Pathname,Testdatapath,Templatepath)
+Call MultipleFielddictionary()
+Call LaunchURL(URLpath,Username,Password)
+Call SelectDBApp(Databasename)
+
+
+'Do until the batch is not available
+Do until swfwindow("GkeyForm").SwfObject("SwfObject").Exist(0)>0 
+
+' Get Current Fieldname 
+Call GetFieldname()
+Call MultipleCheckTCcount()
+Call CheckFieldexistsinDic(Exitflag)
+
+'To exit do loop
+If Exitflag=1Then
+	Exit Do
+End If
+
+Loop
+
+Call CloseResult()
+Call Closeexcel()
+
+'HTML Reports Generation
+Call  ReportsInHtml(PathName,Htmlpath,StTime,URLpath)
+
+'Closing the application
+SwfWindow("GkeyForm").SwfToolbar("menuStrip1").ShowDropdown "Snippet"
+SwfWindow("GkeyForm").SwfToolbar("menuStrip1").Select "Snippet;Exit "
+systemutil.CloseProcessByName "iexplore.exe"
+systemutil.CloseProcessByName "caffeine.exe"
+
+'Email the report 
+mailbody= "PFA of Final HTML and Excel Report for FireFly - Inline Validation For Multiple Field"
+attachmentpath=Htmlpath
+attachmentpath1=Pathname
+Call mail(toaddress,StTime,mailbody,attachmentpath,attachmentpath1)
+
+''#################################Execute Main script#########################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

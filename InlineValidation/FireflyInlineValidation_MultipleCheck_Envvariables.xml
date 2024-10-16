@@ -1,0 +1,76 @@
+<Environment>
+	<Variable>
+		<Name>Batchnumber</Name>
+		<Value>04123612112</Value>
+	</Variable>
+	<Variable>
+		<Name>Inipath</Name>
+		<Value>D:\FireflyInlineValidation\MultipleFieldValidation\EnvironmentVariables\FireflyInlineValidation_MultipleCheck_Envvariables.xml</Value>
+	</Variable>
+	<Variable>
+		<Name>FuncPath</Name>
+		<Value>D:\FireflyInlineValidation\MultipleFieldValidation\ReusableFunction\FireflyInlineValidation_MultipleCheck_functions.vbs</Value>
+	</Variable>
+	<Variable>
+		<Name>Reportpath</Name>
+		<Value>D:\FireflyInlineValidation\MultipleFieldValidation\Reports\</Value>
+	</Variable>
+	<Variable>
+		<Name>Testdatapath</Name>
+		<Value>D:\FireflyInlineValidation\MultipleFieldValidation\TestData\Testcase_InlineValidation.xls</Value>
+	</Variable>
+	<Variable>
+		<Name>Templatepath</Name>
+		<Value>D:\FireflyInlineValidation\MultipleFieldValidation\TestData\ReportTemplate.xls</Value>
+	</Variable>
+	<Variable>
+		<Name>SharedRepPath</Name>
+		<Value>D:\FireflyInlineValidation\MultipleFieldValidation\ObjectRepository\FireflyInlineValidation.tsr</Value>
+	</Variable>
+
+	<Variable>
+		<Name>Caffinepath</Name>
+		<Value>D:\FireflyInlineValidation\MultipleFieldValidation\</Value>
+	</Variable>
+	<Variable>
+		<Name>URLpath</Name>
+		<Value>http://10.20.38.54/Snippet_testing/login.aspx</Value>
+	</Variable>
+	<Variable>
+		<Name>Username</Name>
+		<Value>poornimar</Value>
+	</Variable>
+	<Variable>
+		<Name>Password</Name>
+		<Value>swetha*111</Value>
+	</Variable>
+	<Variable>
+		<Name>Databasename</Name>
+		<Value>Firefly_Cartus-Drop Dowm</Value>
+	</Variable>	
+	<Variable>
+		<Name>Mail_To_address</Name>
+		<Value>poornimar@hovservices.in</Value>
+	</Variable>
+	<Variable>
+		<Name>SqlServername</Name>
+		<Value>10.20.38.56\sql2008dev</Value>
+	</Variable>
+	<Variable>
+		<Name>SqlUid</Name>
+		<Value>qi_db</Value>
+	</Variable>
+	<Variable>
+		<Name>Sqlpassword</Name>
+		<Value>Qi_dB$</Value>
+	</Variable>
+	<Variable>
+		<Name>Sqldbname</Name>
+		<Value>Snippetkey_CARTUS</Value>
+	</Variable>
+	<Variable>
+		<Name>Temppath</Name>
+		<Value>C:\Documents and Settings\poornimar\Local Settings\Temp\</Value>
+	</Variable>
+
+</Environment>

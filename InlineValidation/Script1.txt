@@ -1,0 +1,1884 @@
+﻿
+In_Inipath = "D:\anandm\Project_FireFly\Input\Firefly_Ini.xls"
+'Add a Sheet to datatable
+DataTable.AddSheet "Firefly_Ini"
+Wait 0,200
+'Import a Sheet to datatable
+DataTable.ImportSheet In_Inipath,"Sheet1","Firefly_Ini"
+Wait(2)
+
+
+'Get the variable values from firefly_Ini sheet
+In_FireflyUrl = Trim(DataTable("Firefly_Url","Firefly_Ini"))
+In_FireflyUsername = Trim(DataTable("Firefly_Username","Firefly_Ini"))
+In_Firefly_Password = Trim(DataTable("Firefly_Password","Firefly_Ini"))
+In_Firefly_Input_Path = Trim(DataTable("Firefly_Input_Path","Firefly_Ini"))
+In_Firefly_Db_Name = Trim(DataTable("Database_Name","Firefly_Ini"))
+
+wait(2)
+
+
+
+
+'###############################################################
+'################################################################
+
+'Inputpath="D:\Project_FireFly\Input\GroupKey_Auto_Field Validation.xls"
+
+'''''''''''''#################################################
+'Adding Excel field names to Dictionary 
+'################################################
+Dim hwn
+
+Set Exldic = CreateObject("Scripting.Dictionary")
+Set objExcel = CreateObject("Excel.Application")
+objExcel.Visible = True
+Set objWorkbook = objExcel.WorkBooks.Open(In_Firefly_Input_Path)
+Set objDriverSheet = objWorkbook.Worksheets(1)
+row = 2
+rowvalue = objDriverSheet.Cells(row,"A").Value 
+Do Until Len(rowvalue) = 0
+	rowvalue = Trim(objDriverSheet.Cells(row,"A").Value)
+	appvalue = Trim(objDriverSheet.Cells(row,"C").Value)
+    objDriverSheet.Range("C"&row).Activate
+
+	If len(appvalue)>0 Then
+			If Exldic.Exists(appvalue) Then
+				 msgbox rowvalue & "****" & appvalue
+				print rowvalue & "****" & appvalue
+			Else
+				Exldic.Add appvalue,rowvalue
+			End If 
+	End If		
+			row = row + 1
+Loop
+objWorkbook.Save
+objWorkbook.Close
+objExcel.Quit
+Set objWorkbook = Nothing
+Set objExcel = Nothing
+
+'#########################################################
+'#########################################################
+
+wait 0,100
+
+
+  Set Out_Ieobj = CreateObject("InternetExplorer.Application")
+  Out_Ieobj.Visible = True
+  Out_Ieobj.Navigate(In_FireflyUrl)
+
+  Do while Out_Ieobj.busy=true
+	  wait(1)
+			Do while Dialog("text:=Security Alert").WinButton("nativeclass:=Button","text:=.*Yes").Exist(0)
+				Dialog("text:=Security Alert").WinButton("nativeclass:=Button","text:=.*Yes").highlight
+				Dialog("text:=Security Alert").WinButton("nativeclass:=Button","text:=.*Yes").Click
+            Loop
+  Loop
+
+  Out_Hwnd1=Out_Ieobj.hwnd
+
+  'Create Object for browser
+Set Browserone =Browser("micclass:=Browser","hwnd:="&Out_Hwnd1)
+'Create Object for browserpage
+Set BrowserPage =Browser("micclass:=Browser","hwnd:="&Out_Hwnd1).Page("micclass:=Page")
+BrowserPage.Sync
+BrowserPage.Sync
+BrowserPage.Sync
+wait(1)
+
+BrowserPage.WebEdit("html id:=.*UserName").highlight
+BrowserPage.WebEdit("html id:=.*UserName").Set In_FireflyUsername
+
+BrowserPage.WebEdit("html id:=.*Password").highlight
+BrowserPage.WebEdit("html id:=.*Password").Set In_Firefly_Password
+
+BrowserPage.WebList("html id:=.*Domain").highlight
+BrowserPage.WebList("html id:=.*Domain").Select "INDIALASON"
+
+BrowserPage.WebButton("name:=Log In").highlight
+BrowserPage.WebButton("name:=Log In").Click
+
+wait(1)
+
+ Do while Out_Ieobj.busy=true
+	 wait(1)
+ loop	 
+Browserone.Sync
+Browserone.Sync
+Browserone.Sync
+Browserone.Sync
+
+BrowserPage.Sync
+BrowserPage.Sync
+BrowserPage.Sync
+
+wait(1)
+tout=0
+Do until BrowserPage.WebList("html id:=.*Connections").Exist(0) or tout=80
+
+	wait(1)
+
+     tout=tout+1
+	
+
+Loop
+
+If BrowserPage.WebList("html id:=.*Connections").Exist(0) Then 
+
+	BrowserPage.WebList("html id:=.*Connections").highlight
+	BrowserPage.WebList("html id:=.*Connections").Select  In_Firefly_Db_Name
+Else
+    msgbox "Select Project webList not exist in the page . pl check it manually"	
+End If 	
+
+ Do while Out_Ieobj.busy=true
+	 wait(1)
+ loop	 
+
+BrowserPage.Sync
+BrowserPage.Sync
+BrowserPage.Sync
+
+wait(1)
+
+
+BrowserPage.Link("name:=Applications").highlight
+'BrowserPage.Link("name:=Applications").FireEvent "onclick" 
+BrowserPage.Link("name:=Applications").FireEvent "onclick" 
+
+
+
+
+BrowserPage.Link("name:=Key.*").highlight
+BrowserPage.Link("name:=Key.*").Click
+
+Do until SwfWindow("GkeyForm-- Login User").SwfToolbar("swfname:=GkeyStatusStrip").Exist(0)
+	wait(1)
+Loop
+
+
+
+wait(1)
+
+'##############################
+
+
+
+'########################################
+
+
+
+'#########################################################
+'#########################################################
+'#########################################################
+
+Datatable.AddSheet "Report"
+wait(1)
+strTXT =Replace(CStr(Date),"/","-") & "_"    
+strTXT = strTXT & Replace(CStr(Time),":","-")  
+
+PathName="D:\anandm\Project_FireFly\Reports\"&"Report"&"_"&strTXT&".xls"
+DataTable.ImportSheet "D:\anandm\Project_FireFly\Input\Firefly_HeaderTemplate.xls","Report","Report"
+wait(1)
+DataTable.ExportSheet PathName,"Report"
+wait(1)
+
+Call Func_ResExcelColour(PathName)
+Wait(2)
+
+'#########################################################
+'#########################################################
+
+Dim Shwn
+RNo=1
+Set ReportExcel = CreateObject("Excel.Application")
+ReportExcel.Visible = True
+Set ReportWorkbook = ReportExcel.WorkBooks.Open(PathName)
+Set ReportSheet = ReportWorkbook.Worksheets("Report")
+
+wait(2)
+Set SourceExcel = CreateObject("Excel.Application")
+SourceExcel.Visible = True
+Set SourceWorkbook = SourceExcel.WorkBooks.Open(In_Firefly_Input_Path)
+Set SourceSheet = SourceWorkbook.Worksheets(1)
+
+Shwn=SwfWindow("GkeyForm-- Login User").GetROProperty("hwnd")
+SwfWindow("hwnd:="&Shwn).activate
+
+
+'Do while SwfWindow("hwnd:="&Shwn).SwfObject("swftypename:=Groupkey.GkeyLoading").Exist(0) 
+'	Set A=createobject("wscript.shell")
+'	Print_message="Fetching the Field Groups"
+'	msgbox_time="1"
+'	msgbox_title="Loading pl wait"
+'	A.popup Print_message,msgbox_time,msgbox_title
+'Loop	
+	
+
+
+
+
+SwfWindow("hwnd:="&Shwn).activate
+Set ToolBar=SwfWindow("hwnd:="&Shwn).SwfToolbar("swfname:=GkeyStatusStrip")
+SwfWindow("hwnd:="&Shwn).Activate
+SwfWindow("hwnd:="&Shwn).Object.Focus
+SwfWindow("hwnd:="&Shwn).SwfToolbar("swfname:=GkeyStatusStrip").Object.Focus
+Icnt=ToolBar.GetItemsCount
+	StatusText=ToolBar.GetItem(Icnt-1)
+ENdStatusText="No Groups Available for this user/profile.."
+
+
+ BatchNumber1=""
+
+
+ 
+Do until StatusText =ENdStatusText  or Ucase(StatusText) =Ucase(ENdStatusText) Or StatusText="No Groups Available for this user/profile"
+
+	On error resume next
+
+	Set ToolBar=SwfWindow("hwnd:="&Shwn).SwfToolbar("swfname:=GkeyStatusStrip")
+	SwfWindow("hwnd:="&Shwn).Activate
+	SwfWindow("hwnd:="&Shwn).Object.Focus
+	SwfWindow("hwnd:="&Shwn).SwfToolbar("swfname:=GkeyStatusStrip").Object.Focus
+	
+	Icnt=ToolBar.GetItemsCount
+	StatusText=ToolBar.GetItem(Icnt-1)
+	BatchNumber=ToolBar.GetItem(0)
+	FieldName=Trim(Split(ToolBar.GetItem(Icnt-2),"/")(1))
+	FieldType=Trim(Split(ToolBar.GetItem(Icnt-2),"/")(0))
+	print FieldName
+
+
+ 
+												If Exldic.Exists(FieldName) Then
+										
+													BatchNumber1=""
+												
+														RowNo= Exldic.Item(FieldName)		
+														ReportSheet.Cells(RNo+1,"A").value=RNo
+														ReportSheet.Cells(RNo+1,"B").value=SourceSheet.Cells(RowNo+1,"B").Value    
+														ReportSheet.Cells(RNo+1,"C").value=SourceSheet.Cells(RowNo+1,"C").Value    
+														ReportSheet.Cells(RNo+1,"D").value=SourceSheet.Cells(RowNo+1,"D").Value    
+														ReportSheet.Cells(RNo+1,"E").value=SourceSheet.Cells(RowNo+1,"E").Value    
+														ReportSheet.Cells(RNo+1,"F").value=SourceSheet.Cells(RowNo+1,"F").Value    
+														ReportSheet.Cells(RNo+1,"G").value=SourceSheet.Cells(RowNo+1,"G").Value   
+														ReportSheet.Cells(RNo+1,"H").value=BatchNumber
+												
+														MLen=SourceSheet.Cells(RowNo+1,"E").Value    
+														Dtype=SourceSheet.Cells(RowNo+1,"F").Value    
+														Input=SourceSheet.Cells(RowNo+1,"G").Value    
+														  
+												   
+														ReportWorkbook.Save
+												 
+												
+														   Call highlight(FieldName)
+												Else
+														   ReportSheet.Cells(RNo+1,"A").value=RNo	
+														   ReportSheet.Cells(RNo+1,"C").value=FieldName
+														   ReportSheet.Cells(RNo+1,"H").value=BatchNumber
+										
+														   msgbox "Following field Name is not exist in the excel pl check manually execution is going to stop"&vbcrlf&FieldName
+
+														   exitrun(0)
+										
+										
+												 End If		
+					ReportWorkbook.Save
+						RNo=RNo+1
+			On error goto 0
+
+Loop
+
+
+wait(1)
+
+
+
+
+ReportWorkbook.Save
+ReportWorkbook.Close
+ReportExcel.Quit
+Set ReportWorkbook = Nothing
+Set ReportExcel= Nothing
+
+SourceWorkbook.Save
+SourceWorkbook.Close
+SourceExcel.Quit
+Set SourceWorkbook = Nothing
+Set SourceExcel= Nothing
+
+
+
+
+
+
+Public Function highlight(FieldName)
+
+  Dim Fname
+  
+   Dim BNumber
+
+   Dim BNumber1
+
+   BNumber=""
+   BNumber1=""
+
+   Set ToolBar1=SwfWindow("hwnd:="&Shwn).SwfToolbar("swfname:=GkeyStatusStrip")
+    BNumber=ToolBar1.GetItem(0)
+	Fname=ToolBar1.GetItem(2)
+	
+	FieldType1=Trim(Split(ToolBar1.GetItem(Icnt-2),"/")(0))
+	
+    Set oDesc = Description.Create()
+	oDesc("micclass").Value = "WinObject" 
+	oDesc("swfname").Value =FieldName
+	oDesc("swfname").RegularExpression =true
+	Set Lists =SwfWindow("hwnd:="&Shwn).ChildObjects(oDesc) 
+	NumberOfLists = Lists.Count() 
+	print  Lists.Count
+	On error resume next
+	Lists(0).Object.Focus
+	Lists(0).Type micHome
+	Lists(0).highlight
+   ' print   Lists(0).Getroproperty("swfname")
+	'Lists(0).Type  micF10 
+
+
+				If FieldType1="Popup" Then
+					set wsh2=CreateObject("wscript.shell")  
+					Lists(0).highlight
+					Lists(0).Object.Focus
+					
+								wsh2.SendKeys "^{ENTER}"
+
+								
+							  ReportSheet.Range("K"&RNo+1).Activate
+							  ReportSheet.Cells(RNo+1,"K").Font.Bold = TRUE
+							  ReportSheet.Cells(RNo+1,"K").Value="Popup Field"
+							  ReportSheet.Cells(RNo+1,"K").Font.colorindex = 5
+'				
+'							   ReportSheet.Range("L"&RNo+1).Activate
+'							  ReportSheet.Cells(RNo+1,"L").Font.Bold = TRUE
+'							  ReportSheet.Cells(RNo+1,"L").Value="Popup Field"
+'							  ReportSheet.Cells(RNo+1,"L").Font.colorindex = 5
+							  
+								Exit function 
+		End If
+  
+
+BckColor= Lists(0).GetROProperty("BackColor") @@ hightlight id_;_2491594_;_script infofile_;_ZIP::ssf68.xml_;_
+
+
+
+If Instr(BckColor,"PaleGreen")=0 Then 
+
+ 
+
+'############################# Here New Code  #################################  
+Dim Col
+Col=12
+
+Do Until SourceSheet.Cells(RNo+1,Col).Value = ""
+     ATypetext=SourceSheet.Cells(RNo+1,Col).value
+	 ReportSheet.Cells(RNo+1,Col).value=ATypetext
+	 Exl_DataType=InputDataTypeVal(ATypetext)
+	 wait 0,20
+	 Call DataTypeValidation(Lists(0),Dtype,Exl_DataType,ATypetext,Col)
+	 wait 0,20
+	 Col=Col+3
+Loop 
+
+'#########################################################################	
+
+
+	If instr(Dtype,"Alpha")>0 Then
+        Str=RandomNumber(65,90)
+		Str=chr(Str)
+		Call MaxLenCheck(Lists(0),MLen,Str)
+	ElseIf instr(Dtype,"CheckBox")>0 Then
+		Call MaxLenCheck(Lists(0),MLen,"X")
+	Else
+	    	Str=RandomNumber(1,9)
+			Call MaxLenCheck(Lists(0),MLen,Str)
+	End If
+   Wait(1)
+   
+Else   
+
+              ReportSheet.Range("K"&RNo+1).Activate
+			  ReportSheet.Cells(RNo+1,"K").Font.Bold = TRUE
+			  ReportSheet.Cells(RNo+1,"K").Value="Nkey2 process"
+	          ReportSheet.Cells(RNo+1,"K").Font.colorindex = 5
+
+'			   ReportSheet.Range("L"&RNo+1).Activate
+'			  ReportSheet.Cells(RNo+1,"L").Font.Bold = TRUE
+'			  ReportSheet.Cells(RNo+1,"L").Value="Nkey2 process"
+'	          ReportSheet.Cells(RNo+1,"L").Font.colorindex = 5
+
+
+EnD if 
+   
+'	################################################################
+'	#################################################################
+testq=Lists(0).GetROProperty("text")
+Input=ReportSheet.Cells(RNo+1,"G").Value    
+
+If instr(testq,".0")>0 Then
+	Lists(0).Object.Focus
+	Lists(0).Type micHome
+	Lists(0).Type Input&".00"		
+
+else
+	Lists(0).Object.Focus
+	Lists(0).Type micHome
+	Lists(0).Type Input
+End If
+   
+
+	wait(1)
+    Lists(0).Object.Focus
+	Lists(0).highlight
+
+
+    set wsh1=CreateObject("wscript.shell")  
+	wsh1.SendKeys "~"
+	wait(1)
+dblflag=0
+'If Input="X" Then
+'	dblflag=1
+'
+'				Do until  ToolBar1.GetItem(2)<>Fname
+'					wsh1.SendKeys "~"
+'					wait (1)
+'				Loop
+'	
+'End If
+
+    BNumber1=ToolBar1.GetItem(0)
+
+			Do while BNumber1=BNumber   and ToolBar1.GetItem(2)=Fname      'and ToolBar1.GetItem(2)=Fname      'remove if not works
+
+				pcnt=0
+			
+				testq=Lists(0).GetROProperty("text")
+						If instr(testq,".0")>0 Then
+							On error Resume next
+							Lists(0).Set ""
+							On error goto 0
+							Lists(0).Object.Focus
+							Lists(0).Type micHome
+							Lists(0).Type Input&".00"		
+						
+						else
+						        On error Resume next
+						        Lists(0).Set ""
+								On error goto 0
+								Lists(0).Object.Focus
+								Lists(0).highlight
+								Lists(0).Type micHome
+								Lists(0).Type Input
+
+								wait 0,100
+                                         pcnt=0
+										Do until Lists(0).Getroproperty("text")=Input or ToolBar1.GetItem(2)<>Fname or ToolBar1.GetItem(0)<>BNumber 
+
+                                                   BNumber1=ToolBar1.GetItem(0)
+												   
+												   If BNumber1<>BNumber Then
+														Exit do
+													End If
+
+													If Lists(0).Getroproperty("text")=Input Then
+                                                                Exit do
+													else
+													           On error Resume next
+																Lists(0).Set ""
+																On error goto 0
+																Lists(0).Object.Focus
+																Lists(0).highlight
+																Lists(0).Type micHome
+																Lists(0).Type Input
+													End If
+
+													wait 1
+
+													pcnt=pcnt+1
+
+													If pcnt=10 Then
+														  Exit do
+													End If
+
+									 Loop
+						End If
+						
+				
+						wait(1)
+					    Lists(0).Object.Focus
+						Lists(0).highlight
+						set wsh1=CreateObject("wscript.shell")  
+						wsh1.SendKeys "~"
+                     
+						wait(1)
+
+						BNumber1=ToolBar1.GetItem(0)
+
+						If BNumber1<>BNumber or ToolBar1.GetItem(2)<>Fname Then
+							Exit do
+						End If
+		Loop	
+
+End Function
+
+
+
+Public function MaxLenCheck(byval oEditObject,Byval oMaxLen,Byval Str)
+
+'Window("hwnd:="&Out_Hwnd1).Maximize
+set wsh=CreateObject("wscript.shell")     
+oMaxStr=string(oMaxLen+1,Cstr(Str))    
+oMaxStr1=string(oMaxLen,Cstr(Str))    
+On error resume next
+
+If instr(Trim(oEditObject.GetROProperty("text")),".0")>0 Then 
+Else
+
+oEditObject.Set  ""    
+End If 
+
+'oEditObject.Click'    here
+oEditObject.Object.Focus
+oEditObject.highlight
+oEditObject.Type micHome
+Actmax=oEditObject.GetRoProperty("FieldLength")
+print Actmax
+wsh.SendKeys oMaxStr
+
+wait(1)  
+iValue=oEditObject.GetROProperty("text")    
+
+wait(1)  
+'
+On error GoTo 0
+
+ If len(iValue)=oMaxLen OR cstr(oMaxStr1)=cstr(iValue)   Then
+  Else
+    iValue=oEditObject.GetROProperty("text")    
+End If 	 
+
+On error  resume next
+
+oEditObject.Set  ""    
+
+On error GoTo 0
+	  
+	
+	If len(iValue)=oMaxLen OR cstr(oMaxStr1)=cstr(iValue) or Actmax=oMaxLen  Then
+			ReportSheet.Range("I"&RNo+1).Activate
+			ReportSheet.Cells(RNo+1,"I").Value="'"&oMaxStr
+		  '  ReportSheet.Cells(RNo+1,"I").NumberFormat="#"
+			
+			ReportSheet.Range("J"&RNo+1).Activate
+			ReportSheet.Cells(RNo+1,"J").Value="'"&oMaxStr1
+		  '  ReportSheet.Cells(RNo+1,"J").NumberFormat="#"
+			
+			
+			ReportSheet.Cells(RNo+1,"K").Value="PASS"
+			ReportSheet.Cells(RNo+1,"K").Font.Bold = TRUE
+			ReportSheet.Cells(RNo+1,"K").Font.colorindex = 5
+	else
+			ReportSheet.Range("I"&RNo+1).Activate
+			ReportSheet.Cells(RNo+1,"I").Value="'"&oMaxStr
+			'ReportSheet.Cells(RNo+1,"I").NumberFormat="#"
+			
+			ReportSheet.Range("J"&RNo+1).Activate
+			ReportSheet.Cells(RNo+1,"J").Value="'"&oMaxStr1
+		   '   ReportSheet.Cells(RNo+1,"J").NumberFormat="#"
+			
+			
+			ReportSheet.Range("K"&RNo+1).Activate 
+			ReportSheet.Cells(RNo+1,"K").Value="FAIL"
+			ReportSheet.Cells(RNo+1,"K").Font.Bold = TRUE
+			ReportSheet.Cells(RNo+1,"K").Font.colorindex = 3
+	End If 	 
+
+End Function
+
+
+
+
+
+
+
+
+
+
+	
+
+
+
+ @@ hightlight id_;_2491594_;_script infofile_;_ZIP::ssf68.xml_;_
+ @@ hightlight id_;_2491594_;_script infofile_;_ZIP::ssf69.xml_;_
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+'
+'
+'
+'
+'Public function DataTypeValidation_Old(oEditObject,ADataType)
+'
+'Dim SpChr
+'SpChr="!@#%-/,"
+'
+'
+'If ADataType="CheckBox" or ucase(ADataType)=Ucase("CheckBox")  Then
+'    Typetext="X1"
+'Elseif instr(Trim(oEditObject.GetROProperty("text")),".0")>0 Then 
+'     Typetext="A100.00"
+'Else
+'	 Typetext="A1"
+'End If
+'On error Resume Next
+''Window("hwnd:="&Out_Hwnd1).Maximize
+'set wsh=CreateObject("wscript.shell")  
+'
+'	If Typetext="A100.00" Then
+'	   ' oEditObject.Click    
+'	   oEditObject.Object.Focus
+'	   oEditObject.Type micHome 
+'	   oEditObject.Set  ".0"    
+'	else
+'	    oEditObject.Object.Focus
+'		oEditObject.Type micHome 
+'	  oEditObject.Set  ""    
+'	End If
+'oEditObject.highlight
+''oEditObject.Click    here
+'oEditObject.Object.Focus
+'oEditObject.Type micHome 
+'oEditObject.Type micHome
+'oEditObject.Type micHome
+'wsh.SendKeys Typetext
+'wait(1)
+'oEditObject.highlight
+'iValue=Trim(oEditObject.GetROProperty("text"))
+'
+'
+'If Typetext="A100.00" Then
+'	'oEditObject.Click      here
+'	oEditObject.Object.Focus
+'	oEditObject.Type micHome
+'   oEditObject.Set ".00"    
+'else
+'	oEditObject.Object.Focus
+'	oEditObject.Type micHome
+'	  oEditObject.Set  ""    
+'End if 
+'
+'Do while oEditObject.GetROProperty("text")<>""
+'	oEditObject.highlight
+'	oEditObject.Type micHome 
+'	oEditObject.Type micHome 
+'	oEditObject.Type micHome 
+'	set wsh2=CreateObject("wscript.shell")  
+'	wsh2.SendKeys "^+{END}"
+'	oEditObject.Type micDel  
+'	oEditObject.Type micDel  
+'Loop
+'
+' 
+'
+'
+''oEditObject.Click    
+'oEditObject.Object.Focus
+'oEditObject.Type micHome
+'oEditObject.Type micHome
+'oEditObject.Type micHome
+'wsh.SendKeys "!@#%-/,"
+'wait(1)
+'oEditObject.highlight
+'iValue1=Trim(oEditObject.GetROProperty("text"))
+'
+'oEditObject.Set  ""    
+'
+'
+'
+'
+'
+'oTypingText="A1!@#%-/,"
+'
+'
+'ANflag=0:Nflag=0:Aflag=0:Spflag=0:Xflag=0   
+'
+'ANChr="A1"
+'
+'If cstr(iValue)=cstr("A1") Then
+'	ANflag=1	
+'Elseif  cstr(iValue)=cstr("A")  Then
+'   	Aflag=1	
+'Elseif  cstr(iValue)=cstr("X")  Then
+'   	Xflag=1   
+'ElseIf cint(iValue)=cint("1") or cint(iValue)=cint("1.00") or cint(iValue)=cint("1.0")  or cint(iValue)=cint("100.00") or cint(iValue)=cint("100") Then 
+'        Nflag=1
+'Else
+'  	
+'End If
+'
+'If  iValue1<>"" and iValue1<>".00"   Then
+'	oVisibleText=iValue&space(0)&iValue1
+'
+'
+'
+'
+'		lcnt=len(iValue1)
+'		
+'		For x=1 to lcnt
+'			  Fchr=mid(iValue1,x,1)
+'			
+'			If Instr(SpChr,Fchr)>0 Then
+'				Spflag=1
+'				Exit for
+'			End If
+'		
+'		Next
+'
+'
+'Else
+'	oVisibleText=iValue   
+'
+'End If
+'
+'If ANflag=1 and  Spflag=1Then
+'	DataType="ANS"
+'	
+'elseIf Nflag=1 and  Spflag=1Then
+'	DataType="NS"
+'
+'elseIf Aflag=1 and  Spflag=1Then
+'	DataType="AS"
+'	
+'Elseif 	  ANflag=1 Then 
+'    DataType="AlphaNumeric"
+'	
+'Elseif 	Aflag=1  Then  
+'	DataType="Alpha"
+'	
+'Elseif 	Xflag=1  Then  
+'	DataType="CheckBox"	
+'	
+'Elseif Nflag=1  Then
+'	DataType="Numeric"
+'End If
+'
+'
+'
+'
+'If  ADataType=DataType or  Ucase(ADataType)=Ucase(DataType)  Or Replace(ucase(ADataType),Space(1),"")=Replace(ucase(DataType),Space(1),"") Then
+'
+'	ReportSheet.Cells(RNo+1,"J").Value=oTypingText    
+'	ReportSheet.Cells(RNo+1,"K").Value=oVisibleText
+'	ReportSheet.Range("L"&RNo+1).Activate
+'	ReportSheet.Cells(RNo+1,"L").Font.Bold = TRUE
+'	ReportSheet.Cells(RNo+1,"L").Value="PASS"
+'	ReportSheet.Cells(RowNo+1,"L").Font.colorindex = 5
+'Else
+'
+'	ReportSheet.Cells(RNo+1,"J").Value=oTypingText    
+'	ReportSheet.Cells(RNo+1,"K").Value=oVisibleText
+'	 ReportSheet.Range("L"&RNo+1).Activate
+'	ReportSheet.Cells(RNo+1,"L").Font.Bold = TRUE
+'	ReportSheet.Cells(RNo+1,"L").Value="FAIL"
+'	ReportSheet.Cells(RNo+1,"L").Font.colorindex = 3
+'End If
+'
+'
+'End Function
+
+
+
+Public Function Func_ResExcelColour(Byval IN_sHeetpath)' Parameters - spreedsheet path along with name,sheet number
+
+		IN_sHeetnum=1
+	   On Error Resume Next
+		'SystemUtil.CloseProcessByName("Excel.exe")
+		Wait(5)
+		Set objExcel = CreateObject("Excel.Application")
+		Set objWorkbook = objExcel.Workbooks.open(IN_sHeetpath)
+		Colcnt=objWorkbook.worksheets(IN_sHeetnum).UsedRange.Columns.Count
+		Rowcnt=objWorkbook.worksheets(IN_sHeetnum).UsedRange.Rows.Count
+		Colname1 = objWorkbook.worksheets(IN_sHeetnum).cells(1,1).value
+		Colname2 = objWorkbook.worksheets(IN_sHeetnum).cells(1,Colcnt).Value
+		Coladd = objWorkbook.worksheets(IN_sHeetnum).cells(1,Colcnt).Address
+		av = Split(Coladd,"$")(1)	
+		objWorkbook.worksheets(IN_sHeetnum).select
+		objExcel.Range("A1:"&av&"1").interior.colorindex = 30 
+		objExcel.Range("A1:"&av&"1").Font.colorindex = 2
+		objExcel.Range("A1:"&av&"1").Font.Bold = TRUE
+		objExcel.Range("A1:"&av&"1").Font.Size = 12
+		objExcel.Range("A1:"&av&"1").RowHeight = 18
+		objExcel.Range("A1:"&av&"1").Borders.Weight = 2'1-2
+	   objExcel.Range("A1:"&av&"1").HorizontalAlignment = -4108 
+						
+	  '  objExcel.Range("A2:"&av&Rowcnt).interior.colorindex = 15
+		objExcel.Range("A2:"&av&Rowcnt).Borders.Weight = 2
+		objWorkbook.worksheets(IN_sHeetnum).Cells.EntireColumn.WrapText = True
+		objExcel.Range("A2:"&av&Rowcnt).Font.Fontstyle = "Calibri"
+		objExcel.Range("A2:"&av&Rowcnt).Font.Size = 10
+	   ' objExcel.Range("A2:"&av&Rowcnt).HorizontalAlignment = -4108 
+		objWorkbook.worksheets(IN_sHeetnum).Cells.EntireColumn.AutoFit 		  
+		objWorkbook.Save
+		objWorkbook.Close
+		Set objWorkbook =Nothing
+		Set objExcel = Nothing
+		On Error GoTo 0
+
+End Function
+
+ 	
+'########################################
+
+
+
+
+public function InputDataTypeVal(strng)
+
+
+	
+AFLAG=0:SFLAG=0:NFLAG=0
+Dim regEx, Match, Matches   ' Create variable.
+   Set regEx = New RegExp   ' Create regular expression.
+   regEx.Pattern ="[A-Z]"'Set pattern.
+   regEx.IgnoreCase = True   ' Set case insensitivity.
+   regEx.Global = True   ' Set global applicability.
+   Set Matches = regEx.Execute(strng)   ' Execute search.
+   For Each Match in Matches   ' Iterate Matches collection.
+	  AFLAG=1
+		  Exit FOR 
+   Next
+
+
+   regEx.Pattern ="[0-9]"'Set pattern.
+   regEx.IgnoreCase = True   ' Set case insensitivity.
+   regEx.Global = True   ' Set global applicability.
+   Set Matches = regEx.Execute(strng)   ' Execute search.
+   For Each Match in Matches   ' Iterate Matches collection.
+	  NFLAG=1
+		  Exit FOR 
+   Next
+
+   regEx.Pattern ="[!@#$%^&*().(){}]"'Set pattern.
+   regEx.IgnoreCase = True   ' Set case insensitivity.
+   regEx.Global = True   ' Set global applicability.
+   Set Matches = regEx.Execute(strng)   ' Execute search.
+   For Each Match in Matches   ' Iterate Matches collection.
+	  SFLAG=1
+	  Exit FOR 
+   Next
+
+
+If NFLAG=1 and AFLAG=1 and SFLAG=1 Then
+   InputDataType="ANS"
+Elseif 	NFLAG=1 and AFLAG=1 and SFLAG=0 Then 
+   InputDataType="AN"
+Elseif NFLAG=1 and AFLAG=0 and SFLAG=0   then
+	   InputDataType="NUMERIC"
+Elseif NFLAG=0 and AFLAG=1 and SFLAG=0 then
+	InputDataType="ALPHA"
+Elseif NFLAG=1 and AFLAG=0 and SFLAG=1 then 
+	InputDataType="NUMERICSPECIAL"
+Elseif NFLAG=0 and AFLAG=1 and SFLAG=1 then 
+	InputDataType="ALPHASPECIAL"	
+Elseif NFLAG=0 and AFLAG=0 and SFLAG=1 then 
+	InputDataType="SPECIAL"		
+Elseif NFLAG=0 and AFLAG=0 and SFLAG=0 then 
+	InputDataType="No Match For Input"			
+End If
+
+InputDataTypeVal=InputDataType
+
+		
+End Function 
+
+
+
+
+
+
+Public function DataTypeValidation(oEditObject,ADataType,Exl_DataType,ATypetext,Col)
+    iValue=""
+
+   wait 0,20
+
+   ATypetext=Replace(ATypetext,"%","")
+
+   On error resume next
+ 
+   set wsh=CreateObject("wscript.shell")  
+
+   
+	If instr(Trim(oEditObject.GetROProperty("text")),".0")>0 Then 
+	   ' oEditObject.Click    
+	   oEditObject.Object.Focus
+	   oEditObject.Type micHome 
+	   oEditObject.Set  ".0"    
+	else
+		 oEditObject.Object.Focus
+		 oEditObject.Type micHome 
+		 oEditObject.Set  ""    
+	End If
+
+ppflag=0
+
+Do while oEditObject.GetROProperty("text")<>"" and instr(Trim(oEditObject.GetROProperty("text")),".0")=0
+	oEditObject.highlight
+	oEditObject.Type micHome 
+	oEditObject.Type micHome 
+	oEditObject.Type micHome 
+	set wsh2=CreateObject("wscript.shell")  
+	wsh2.SendKeys "^+{END}"
+	oEditObject.Type micDel  
+	oEditObject.Type micDel 
+	wsh2.SendKeys "^+{END}"
+	oEditObject.Type micDel  
+	oEditObject.Type micDel
+	wsh2.SendKeys "^+{END}"
+	oEditObject.Type micDel  
+	oEditObject.Type micDel
+	wsh2.SendKeys "^+{END}"
+	oEditObject.Type micDel  
+	oEditObject.Type micDel
+	wsh2.SendKeys "^+{END}"
+	oEditObject.Type micDel  
+	oEditObject.Type micDel
+	wsh2.SendKeys "^+{END}"
+	oEditObject.Type micDel  
+	oEditObject.Type micDel
+	ppflag=1 
+Loop
+wait 0,10
+
+On error Goto 0
+
+On error resume next 
+
+oEditObject.highlight
+oEditObject.Object.Focus
+oEditObject.Type micHome 
+oEditObject.Type micHome
+oEditObject.Type micHome
+wsh.SendKeys ATypetext
+
+If err.number>0  Then
+	oEditObject.highlight
+	oEditObject.Object.Focus
+	oEditObject.Type ATypetext
+else
+	
+End If
+
+	wait(1)
+	oEditObject.highlight
+	iValue=Trim(oEditObject.GetROProperty("text"))
+
+wait 0,10
+
+On error Goto 0
+If ATypetext<>""  and ucase(Exl_DataType)="ALPHA" and instr(oEditObject.GetROProperty("text"),".0")=0  Then
+
+	  Call AlphaType(ADataType,iValue,Col)
+
+ElseIf ATypetext<>""  and ucase(Exl_DataType)="ALPHASPECIAL" and instr(oEditObject.GetROProperty("text"),".0")=0  Then
+
+	  Call AlphaSpecialType(ADataType,iValue,Col)	  
+
+ElseIf ATypetext<>""  and ucase(Exl_DataType)="AN" and instr(oEditObject.GetROProperty("text"),".0")=0  Then
+
+	  Call AlphaNumericType(ADataType,iValue,Col)	  
+
+ElseIf ATypetext<>""  and ucase(Exl_DataType)="ANS" and instr(oEditObject.GetROProperty("text"),".0")=0  Then
+
+	  Call AlphaNumericSpecialType(ADataType,iValue,Col)	  	  
+
+ElseIf ATypetext<>""  and ucase(Exl_DataType)="NUMERIC" and instr(oEditObject.GetROProperty("text"),".0")=0  Then
+
+	  Call NumericType(ADataType,iValue,Col)	  	 
+
+ElseIf ATypetext<>""  and ucase(Exl_DataType)="NUMERICSPECIAL" and instr(oEditObject.GetROProperty("text"),".0")=0  Then
+
+	  Call NumericSpecialType(ADataType,iValue,Col)
+	  	  	 	
+ElseIf ATypetext<>""  and ucase(Exl_DataType)="SPECIAL" and instr(oEditObject.GetROProperty("text"),".0")=0  Then
+
+	  Call SpecialType(ADataType,iValue,Col)	  
+	  
+Elseif instr(oEditObject.GetROProperty("text"),".0")>0 Then 
+
+	    ReportSheet.Cells(RNo+1,Col+1). Activate
+		ReportSheet.Cells(RNo+1,Col+1).Value=iValue
+		ReportSheet.Cells(RNo+1,Col+2). Activate
+		ReportSheet.Cells(RNo+1,Col+2).Value="PASS"
+		ReportSheet.Cells(RNo+1,Col+2).Font.Bold = TRUE
+		ReportSheet.Cells(RNo+1,Col+2).Font.colorindex = 5
+
+End If 	
+
+If ppflag=1 Then  'Code for  Patient Account No
+
+		Do while oEditObject.GetROProperty("text")<>"" and instr(Trim(oEditObject.GetROProperty("text")),".0")=0
+		oEditObject.highlight
+		oEditObject.Type micHome 
+		oEditObject.Type micHome 
+		oEditObject.Type micHome 
+		set wsh2=CreateObject("wscript.shell")  
+		wsh2.SendKeys "^+{END}"
+		oEditObject.Type micDel  
+		oEditObject.Type micDel 
+		wsh2.SendKeys "^+{END}"
+		oEditObject.Type micDel  
+		oEditObject.Type micDel
+		wsh2.SendKeys "^+{END}"
+		oEditObject.Type micDel  
+		oEditObject.Type micDel
+		wsh2.SendKeys "^+{END}"
+		oEditObject.Type micDel  
+		oEditObject.Type micDel
+		wsh2.SendKeys "^+{END}"
+		oEditObject.Type micDel  
+		oEditObject.Type micDel
+		wsh2.SendKeys "^+{END}"
+		oEditObject.Type micDel  
+		oEditObject.Type micDel
+		ppflag=0
+	Loop
+End If
+
+
+End Function    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+'#########################  AlphaType ########################
+
+
+
+Public function AlphaType(ADataType,iValue,Col)
+
+
+flag=0
+
+	If Ucase(ADataType)="ALPHA" Then
+			If isAlpha(iValue)=True  Then
+                flag=1
+			End If
+	Elseif 	Ucase(ADataType)="AS" Then	
+				If isAlphaSpecial(iValue)=True  Then
+			        flag=1
+				End If
+	Elseif 	Ucase(ADataType)="AN" or Ucase(ADataType)="ALPHANUMERIC" Then	
+				If isAlphNum(iValue)=True  Then
+			        flag=1
+			   End If
+	Elseif 	Ucase(ADataType)="ANS" Then	
+            If isAlphNumSpecial(iValue)=True Then
+				flag=1
+			End If
+	Elseif 	Ucase(ADataType)="CHECKBOX" Then	
+            If iValue="" or  ucase(iValue)="X" then 
+				  'pass report here 
+				  flag=1
+			End If		
+	Elseif 	Ucase(ADataType)="NUMERIC" Then	
+	     If iValue=""  then 
+				 flag=1 
+			End If		 
+	  Elseif 	Ucase(ADataType)="NUMERICSPECIAL" OR Ucase(ADataType)="NS"Then	
+	     If iValue=""  then 
+				 flag=1 
+			End If			   
+	End If
+
+
+
+If flag=1 Then    
+        ReportSheet.Cells(RNo+1,Col+1). Activate
+		ReportSheet.Cells(RNo+1,Col+1).Value=iValue
+		ReportSheet.Cells(RNo+1,Col+2). Activate
+		ReportSheet.Cells(RNo+1,Col+2).Value="PASS"
+		ReportSheet.Cells(RNo+1,Col+2).Font.Bold = TRUE
+		ReportSheet.Cells(RNo+1,Col+2).Font.colorindex = 5
+else			  
+        ReportSheet.Cells(RNo+1,Col+1). Activate
+		ReportSheet.Cells(RNo+1,Col+1).Value=iValue
+		ReportSheet.Cells(RNo+1,Col+2). Activate
+		ReportSheet.Cells(RNo+1,Col+2).Value="FAIL"
+		ReportSheet.Cells(RNo+1,Col+2).Font.Bold = TRUE
+		ReportSheet.Cells(RNo+1,Col+2).Font.colorindex = 3
+End If
+
+
+End Function
+
+'####################
+
+
+
+
+
+
+'#########################  AlphaSpecialType ########################
+
+
+
+Public function AlphaSpecialType(ADataType,iValue,Col)
+
+
+flag=0
+
+	If Ucase(ADataType)="ALPHA" Then
+			If isAlpha(iValue)=True  Then
+                flag=1
+			End If
+	Elseif 	Ucase(ADataType)="AS" Then	
+				If isAlphaSpecial(iValue)=True  Then
+			        flag=1
+				End If
+	Elseif 	Ucase(ADataType)="AN"  or Ucase(ADataType)="ALPHANUMERIC" Then	
+				If isAlphNum(iValue)=True  Then
+			        flag=1
+			   End If
+	Elseif 	Ucase(ADataType)="ANS" Then	
+	       op=InputDataTypeVal(iValue)
+            If isAlphNumSpecial(iValue)=True  and op="ALPHASPECIAL" Then
+				flag=1
+			End If
+	Elseif 	Ucase(ADataType)="CHECKBOX" Then	
+            If iValue="" or  ucase(iValue)="X" then 
+				  'pass report here 
+				  flag=1
+			End If		
+	Elseif 	Ucase(ADataType)="NUMERIC" Then	
+	     If iValue=""  then 
+				 flag=1 
+			End If		 
+	  Elseif 	Ucase(ADataType)="NUMERICSPECIAL" OR Ucase(ADataType)="NS"Then	
+	     If iValue=""  then 
+				 flag=1 
+			End If			   
+	End If
+
+
+
+If flag=1 Then    
+        ReportSheet.Cells(RNo+1,Col+1). Activate
+		ReportSheet.Cells(RNo+1,Col+1).Value=iValue
+		ReportSheet.Cells(RNo+1,Col+2). Activate
+		ReportSheet.Cells(RNo+1,Col+2).Value="PASS"
+		ReportSheet.Cells(RNo+1,Col+2).Font.Bold = TRUE
+		ReportSheet.Cells(RNo+1,Col+2).Font.colorindex = 5
+else			  
+        ReportSheet.Cells(RNo+1,Col+1). Activate
+		ReportSheet.Cells(RNo+1,Col+1).Value=iValue
+		ReportSheet.Cells(RNo+1,Col+2). Activate
+		ReportSheet.Cells(RNo+1,Col+2).Value="FAIL"
+		ReportSheet.Cells(RNo+1,Col+2).Font.Bold = TRUE
+		ReportSheet.Cells(RNo+1,Col+2).Font.colorindex = 3
+End If
+
+
+End Function
+
+'####################
+
+
+
+
+
+'#########################  AlphaNumericType ########################
+
+
+
+Public function AlphaNumericType(ADataType,iValue,Col)
+
+
+flag=0
+
+	If Ucase(ADataType)="ALPHA" Then
+			If isAlpha(iValue)=True  Then
+                flag=1
+			End If
+	Elseif 	Ucase(ADataType)="AS" Then	
+				If isAlphaSpecial(iValue)=True  Then
+			        flag=1
+				End If
+	Elseif 	Ucase(ADataType)="AN"  or Ucase(ADataType)="ALPHANUMERIC"  Then	
+				If isAlphNum(iValue)=True  Then
+			        flag=1
+			   End If
+	Elseif 	Ucase(ADataType)="ANS" Then	
+	      op=InputDataTypeVal(iValue)
+            If isAlphNumSpecial(iValue)=True and op="AN" Then
+				flag=1
+			End If
+	Elseif 	Ucase(ADataType)="CHECKBOX" Then	
+            If iValue="" or  ucase(iValue)="X" then 
+				  'pass report here 
+				  flag=1
+			End If		
+	Elseif 	Ucase(ADataType)="NUMERIC" Then	
+			   If isNum(iValue)=True  Then
+							flag=1
+			   End If   
+	  Elseif 	Ucase(ADataType)="NUMERICSPECIAL" OR Ucase(ADataType)="NS"Then	
+	      If isNum(iValue)=True  Then
+							flag=1
+			   End If      	   
+	End If
+
+
+
+If flag=1 Then    
+        ReportSheet.Cells(RNo+1,Col+1). Activate
+		ReportSheet.Cells(RNo+1,Col+1).Value=iValue
+		ReportSheet.Cells(RNo+1,Col+2). Activate
+		ReportSheet.Cells(RNo+1,Col+2).Value="PASS"
+		ReportSheet.Cells(RNo+1,Col+2).Font.Bold = TRUE
+		ReportSheet.Cells(RNo+1,Col+2).Font.colorindex = 5
+else			  
+        ReportSheet.Cells(RNo+1,Col+1). Activate
+		ReportSheet.Cells(RNo+1,Col+1).Value=iValue
+		ReportSheet.Cells(RNo+1,Col+2). Activate
+		ReportSheet.Cells(RNo+1,Col+2).Value="FAIL"
+		ReportSheet.Cells(RNo+1,Col+2).Font.Bold = TRUE
+		ReportSheet.Cells(RNo+1,Col+2).Font.colorindex = 3
+End If
+
+
+End Function
+
+'####################
+
+
+
+
+Public function AlphaNumericSpecialType(ADataType,iValue,Col)
+
+
+flag=0
+
+	If Ucase(ADataType)="ALPHA" Then
+			If isAlpha(iValue)=True  Then
+                flag=1
+			End If
+	Elseif 	Ucase(ADataType)="AS" Then	
+				If isAlphaSpecial(iValue)=True  Then
+			        flag=1
+				End If
+	Elseif 	Ucase(ADataType)="AN"  or Ucase(ADataType)="ALPHANUMERIC"  Then	
+				If isAlphNum(iValue)=True  Then
+			        flag=1
+			   End If
+	Elseif 	Ucase(ADataType)="ANS" Then	
+
+            op=InputDataTypeVal(iValue)
+	            
+            If isAlphNumSpecial(iValue)=True and op="ANS" Then
+				flag=1
+			End If
+	Elseif 	Ucase(ADataType)="CHECKBOX" Then	
+            If iValue="" or  ucase(iValue)="X" then 
+				  'pass report here 
+				  flag=1
+			End If		
+	Elseif 	Ucase(ADataType)="NUMERIC" Then	
+			   If isNum(iValue)=True  Then
+							flag=1
+			   End If   
+	  Elseif 	Ucase(ADataType)="NUMERICSPECIAL" OR Ucase(ADataType)="NS"Then	
+	      If isNum(iValue)=True  Then
+							flag=1
+			   End If      	   
+	End If
+
+
+
+If flag=1 Then    
+        ReportSheet.Cells(RNo+1,Col+1). Activate
+		ReportSheet.Cells(RNo+1,Col+1).Value=iValue
+		ReportSheet.Cells(RNo+1,Col+2). Activate
+		ReportSheet.Cells(RNo+1,Col+2).Value="PASS"
+		ReportSheet.Cells(RNo+1,Col+2).Font.Bold = TRUE
+		ReportSheet.Cells(RNo+1,Col+2).Font.colorindex = 5
+else			  
+        ReportSheet.Cells(RNo+1,Col+1). Activate
+		ReportSheet.Cells(RNo+1,Col+1).Value=iValue
+		ReportSheet.Cells(RNo+1,Col+2). Activate
+		ReportSheet.Cells(RNo+1,Col+2).Value="FAIL"
+		ReportSheet.Cells(RNo+1,Col+2).Font.Bold = TRUE
+		ReportSheet.Cells(RNo+1,Col+2).Font.colorindex = 3
+End If
+
+
+End Function
+
+'####################
+
+
+
+
+Public function NumericType(ADataType,iValue,Col)
+
+
+flag=0
+
+	If Ucase(ADataType)="ALPHA" Then
+			If iValue="" Then
+                flag=1
+			End If
+	Elseif 	Ucase(ADataType)="AS" Then	
+		 	If iValue="" Then
+                flag=1
+			End If
+	Elseif 	Ucase(ADataType)="AN"    or Ucase(ADataType)="ALPHANUMERIC"  Then	
+				If isAlphNum(iValue)=True  and isnumeric(iValue) Then
+			        flag=1
+			   End If
+	Elseif 	Ucase(ADataType)="ANS" Then	
+            If isAlphNumSpecial(iValue)=True  and isnumeric(iValue) Then
+				flag=1
+			End If
+	Elseif 	Ucase(ADataType)="CHECKBOX" Then	
+            If iValue="" or  ucase(iValue)="X" then 
+				  'pass report here 
+				  flag=1
+			End If		
+	Elseif 	Ucase(ADataType)="NUMERIC" Then	
+			   If isNum(iValue)=True  Then
+							flag=1
+			   End If   
+	  Elseif 	Ucase(ADataType)="NUMERICSPECIAL" OR Ucase(ADataType)="NS"Then	
+	      If isNum(iValue)=True  Then
+							flag=1
+			   End If      	   
+	End If
+
+
+
+If flag=1 Then    
+        ReportSheet.Cells(RNo+1,Col+1). Activate
+		ReportSheet.Cells(RNo+1,Col+1).Value=iValue
+		ReportSheet.Cells(RNo+1,Col+2). Activate
+		ReportSheet.Cells(RNo+1,Col+2).Value="PASS"
+		ReportSheet.Cells(RNo+1,Col+2).Font.Bold = TRUE
+		ReportSheet.Cells(RNo+1,Col+2).Font.colorindex = 5
+else			  
+        ReportSheet.Cells(RNo+1,Col+1). Activate
+		ReportSheet.Cells(RNo+1,Col+1).Value=iValue
+		ReportSheet.Cells(RNo+1,Col+2). Activate
+		ReportSheet.Cells(RNo+1,Col+2).Value="FAIL"
+		ReportSheet.Cells(RNo+1,Col+2).Font.Bold = TRUE
+		ReportSheet.Cells(RNo+1,Col+2).Font.colorindex = 3
+End If
+
+
+End Function
+
+'####################
+
+
+
+
+Public function SpecialType(ADataType,iValue,Col)
+
+
+flag=0
+
+	If Ucase(ADataType)="ALPHA" Then
+			If iValue="" Then
+                flag=1
+			End If
+	Elseif 	Ucase(ADataType)="AS" Then	
+	     If isAlphNumSpecial(iValue)=True Then
+				flag=1
+			End If
+	Elseif 	Ucase(ADataType)="AN"   or Ucase(ADataType)="ALPHANUMERIC"  Then	
+				If iValue="" Then
+                flag=1
+			End If
+	Elseif 	Ucase(ADataType)="ANS" Then	
+            If isAlphNumSpecial(iValue)=True and  iValue<>""   Then
+				flag=1
+			End If
+	Elseif 	Ucase(ADataType)="CHECKBOX" Then	
+            If iValue="" or  ucase(iValue)="X" then 
+				  'pass report here 
+				  flag=1
+			End If		
+	Elseif 	Ucase(ADataType)="NUMERIC" Then	
+			  If iValue="" Then
+                flag=1
+			End If   
+	  Elseif 	Ucase(ADataType)="NUMERICSPECIAL" OR Ucase(ADataType)="NS"Then	
+	     If isNumSpecial(iValue)=True  Then
+							flag=1
+			   End If            	   
+	End If
+
+
+
+If flag=1 Then    
+        ReportSheet.Cells(RNo+1,Col+1). Activate
+		ReportSheet.Cells(RNo+1,Col+1).Value=iValue
+		ReportSheet.Cells(RNo+1,Col+2). Activate
+		ReportSheet.Cells(RNo+1,Col+2).Value="PASS"
+		ReportSheet.Cells(RNo+1,Col+2).Font.Bold = TRUE
+		ReportSheet.Cells(RNo+1,Col+2).Font.colorindex = 5
+else			  
+        ReportSheet.Cells(RNo+1,Col+1). Activate
+		ReportSheet.Cells(RNo+1,Col+1).Value=iValue
+		ReportSheet.Cells(RNo+1,Col+2). Activate
+		ReportSheet.Cells(RNo+1,Col+2).Value="FAIL"
+		ReportSheet.Cells(RNo+1,Col+2).Font.Bold = TRUE
+		ReportSheet.Cells(RNo+1,Col+2).Font.colorindex = 3
+End If
+
+
+End Function
+
+'####################
+
+
+
+
+Public function NumericSpecialType(ADataType,iValue,Col)
+
+
+flag=0
+
+	If Ucase(ADataType)="ALPHA" Then
+			If iValue="" Then
+                flag=1
+			End If
+	Elseif 	Ucase(ADataType)="AS" Then	
+		 	 If isSpecial(iValue)=True Then
+				flag=1
+			End If
+	Elseif 	Ucase(ADataType)="AN" or Ucase(ADataType)="ALPHANUMERIC" Then	
+			If isNum(iValue)=True  Then
+							flag=1
+			   End If   
+	Elseif 	Ucase(ADataType)="ANS" Then	
+
+	       op=InputDataTypeVal(iValue)
+		   
+            If isNumSpecial(iValue)=True and op="NUMERICSPECIAL" Then
+				flag=1
+			End If
+	Elseif 	Ucase(ADataType)="CHECKBOX" Then	
+            If iValue="" or  ucase(iValue)="X" then 
+				  'pass report here 
+				  flag=1
+			End If		
+	Elseif 	Ucase(ADataType)="NUMERIC" Then	
+			   If isNum(iValue)=True  Then
+							flag=1
+			   End If   
+	  Elseif 	Ucase(ADataType)="NUMERICSPECIAL" OR Ucase(ADataType)="NS"Then	
+	      If isNumSpecial(iValue)=True  Then
+							flag=1
+			   End If      	   
+	End If
+
+
+If flag=1 Then    
+        ReportSheet.Cells(RNo+1,Col+1). Activate
+		ReportSheet.Cells(RNo+1,Col+1).Value=iValue
+		ReportSheet.Cells(RNo+1,Col+2). Activate
+		ReportSheet.Cells(RNo+1,Col+2).Value="PASS"
+		ReportSheet.Cells(RNo+1,Col+2).Font.Bold = TRUE
+		ReportSheet.Cells(RNo+1,Col+2).Font.colorindex = 5
+else			  
+        ReportSheet.Cells(RNo+1,Col+1). Activate
+		ReportSheet.Cells(RNo+1,Col+1).Value=iValue
+		ReportSheet.Cells(RNo+1,Col+2). Activate
+		ReportSheet.Cells(RNo+1,Col+2).Value="FAIL"
+		ReportSheet.Cells(RNo+1,Col+2).Font.Bold = TRUE
+		ReportSheet.Cells(RNo+1,Col+2).Font.colorindex = 3
+End If
+
+
+
+End Function
+
+'####################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+'#################################3 Datat type validation functions 
+
+
+
+
+
+
+Public Function isAlpha(textInput)
+
+	dim i
+	dim arrAlNum()
+	
+	redim arrAlNum((len(textInput)-1))
+	
+	'Assign each character of input to an array element
+	For i = 0 To UBound(arrAlNum)
+	arrAlNum(i) = Mid(textInput, i + 1, 1)
+	Next
+	
+	'Work through each element to check for presence of invalid character
+	'(any non-alpha char)
+	For i = 0 To UBound(arrAlNum)
+		If Not ((arrAlNum(i) > Chr(64) And arrAlNum(i) < Chr(91)) _
+		Or (arrAlNum(i) > Chr(96) And arrAlNum(i) < Chr(123))) _
+		Then
+		isAlpha = False
+		exit function
+		End If
+	Next
+	
+	isAlpha = True
+	
+End Function 
+
+
+
+
+Public Function isAlphaSpecial(textInput)
+
+dim i
+dim arrAlNum()
+
+redim arrAlNum((len(textInput)-1))
+
+'Assign each character of input to an array element
+For i = 0 To UBound(arrAlNum)
+arrAlNum(i) = Mid(textInput, i + 1, 1)
+Next
+
+'Work through each element to check for presence of invalid character
+'(any non-alpha char)
+For i = 0 To UBound(arrAlNum)
+	If Not ((arrAlNum(i) > Chr(64) And arrAlNum(i) < Chr(91)) _
+	Or (arrAlNum(i) > Chr(96) And arrAlNum(i) < Chr(123))) _
+	Then
+	    If instr("[]{}`~!@#$%^&*()_+|\=-,<>./?:;'", arrAlNum(i))>0 Then
+		 else
+		   isAlphaSpecial = False
+	       exit function
+		End If
+	End If
+Next
+
+isAlphaSpecial = True
+End Function 
+
+
+'
+
+
+Public Function isAlphNum(textInput)
+
+	dim i
+	dim arrAlNum()
+	
+	redim arrAlNum((len(textInput)-1))
+	
+	'Assign each character of input to an array element
+	For i = 0 To UBound(arrAlNum)
+	arrAlNum(i) = Mid(textInput, i + 1, 1)
+	Next
+	
+	'Work through each element to check for presence of invalid character
+	'(any non-alpha char)
+	For i = 0 To UBound(arrAlNum)
+		If Not ((arrAlNum(i) > Chr(47) And arrAlNum(i) < Chr(58)) _
+		Or (arrAlNum(i) > Chr(64) And arrAlNum(i) < Chr(91)) _
+		Or (arrAlNum(i) > Chr(96) And arrAlNum(i) < Chr(123))) _
+		Then
+		isAlphNum = False
+		exit function
+		End If
+	Next
+	
+	isAlphNum = True
+	
+End Function 
+
+
+
+
+
+
+
+
+Public Function isAlphNumSpecial(textInput)
+
+	dim i
+	dim arrAlNum()
+	
+	redim arrAlNum((len(textInput)-1))
+	
+	'Assign each character of input to an array element
+	For i = 0 To UBound(arrAlNum)
+	arrAlNum(i) = Mid(textInput, i + 1, 1)
+	Next
+	
+	'Work through each element to check for presence of invalid character
+	'(any non-alpha char)
+	For i = 0 To UBound(arrAlNum)
+		If Not ((arrAlNum(i) > Chr(47) And arrAlNum(i) < Chr(58)) _
+		Or (arrAlNum(i) > Chr(64) And arrAlNum(i) < Chr(91)) _
+		Or (arrAlNum(i) > Chr(96) And arrAlNum(i) < Chr(123))) _
+		Then
+				  If instr("[]{}`~!@#$%^&*()_+|\=-,<>./?:;'", arrAlNum(i))>0 Then
+				 else
+				   isAlphNumSpecial = False
+				   exit function
+				End If
+		End If
+	Next
+	
+	isAlphNumSpecial = True
+	
+End Function 
+
+
+
+
+
+
+Public Function isSpecial(textInput)
+
+dim i
+dim arrAlNum()
+
+redim arrAlNum((len(textInput)-1))
+
+'Assign each character of input to an array element
+For i = 0 To UBound(arrAlNum)
+arrAlNum(i) = Mid(textInput, i + 1, 1)
+Next
+
+'Work through each element to check for presence of invalid character
+'(any non-alpha char)
+For i = 0 To UBound(arrAlNum)
+
+	    If instr("[]{}`~!@#$%^&*()_+|\=-,<>./?:;'", arrAlNum(i))>0 Then
+		 else
+		   isSpecial = False
+	       exit function
+		End If
+
+Next
+
+isSpecial = True
+
+End Function 
+
+
+
+
+
+Public Function isNumSpecial(textInput)
+
+	dim i
+	dim arrAlNum()
+	
+	redim arrAlNum((len(textInput)-1))
+	
+	'Assign each character of input to an array element
+	For i = 0 To UBound(arrAlNum)
+	arrAlNum(i) = Mid(textInput, i + 1, 1)
+	Next
+	
+	'Work through each element to check for presence of invalid character
+	'(any non-alpha char)
+	For i = 0 To UBound(arrAlNum)
+		If Not (arrAlNum(i) > Chr(47)) And (arrAlNum(i) < Chr(58)) Then 
+				  If instr("[]{}`~!@#$%^&*()_+|\=-,<>./?:;'", arrAlNum(i))>0 Then
+				 else
+				   isNumSpecial = False
+				   exit function
+				End If
+		End If
+	Next
+	
+	isNumSpecial = True
+	
+End Function 
+
+	
+
+
+
+Public Function isNum(textInput)
+
+	dim i
+	dim arrAlNum()
+	
+	redim arrAlNum((len(textInput)-1))
+	
+	'Assign each character of input to an array element
+	For i = 0 To UBound(arrAlNum)
+	arrAlNum(i) = Mid(textInput, i + 1, 1)
+	Next
+	
+	'Work through each element to check for presence of invalid character
+	'(any non-alpha char)
+	For i = 0 To UBound(arrAlNum)
+		If Not (arrAlNum(i) > Chr(47)) And (arrAlNum(i) < Chr(58)) Then 
+			      isNum = False
+				   exit function
+		  
+		End If
+	Next
+	
+	isNum = True
+	
+End Function 
+
+
+
+
+
+
+'
+'
+'p="ARA!@&*120#"
+'
+'On error resume next 
+'set wsh=CreateObject("wscript.shell")  
+''##################
+'ATypetext="ARA!@%^()#120"
+'Set oEditObject=SwfWindow("GkeyForm-- Login User").SwfEdit("HCFA33_NPI")
+' oEditObject.Object.Focus
+'		 oEditObject.Type micHome 
+'		 oEditObject.Set  ""    
+'	
+'		oEditObject.highlight
+'	oEditObject.Click  
+'	oEditObject.Object.Focus
+'	oEditObject.Type micHome 
+'	oEditObject.Type micHome
+'	oEditObject.Type micHome
+'	wsh.SendKeys ATypetext
+'		If err.number>0 then  
+'			   oEditObject.Type  "ARA!@#%^&*120"
+'		End If
+'	wait(1)
+'	oEditObject.highlight
+'	iValue=Trim(oEditObject.GetROProperty("text"))
+'
+'On error goto 0
+'
+'
+''SwfWindow("GkeyForm-- Login User").SwfEdit("HCFA33_NPI").Set "ARA!@#%&*120" @@ hightlight id_;_1836580_;_script infofile_;_ZIP::ssf94.xml_;_
+''SwfWindow("GkeyForm-- Login User").SwfEdit("HCFA33_NPI").Type  micReturn @@ hightlight id_;_1836580_;_script infofile_;_ZIP::ssf95.xml_;_
+'
+
+
+
+
+
+
+
+ 
+
+
+
+
+'Set oEditObject=SwfWindow("GkeyForm-- Login User").SwfEditor("HCFA26")
+'
+'Do while oEditObject.GetROProperty("text")<>""
+'	oEditObject.highlight
+'	oEditObject.Type micHome 
+'	oEditObject.Type micHome 
+'	oEditObject.Type micHome 
+'	set wsh2=CreateObject("wscript.shell")  
+'	wsh2.SendKeys "^+{END}"
+'	oEditObject.Type micDel  
+'Loop
+'
+' 
+'
+'
+'
+'
+'
+
+
+
+
+
